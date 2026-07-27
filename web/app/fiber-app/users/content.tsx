@@ -2,6 +2,7 @@
 
 import { IconUsersGroup } from "@tabler/icons-react";
 import { FaListPage } from "@/components/fiber-app/fa-list-page";
+import type { FaField } from "@/components/fiber-app/fa-record-dialog";
 import type { ColumnDef } from "@/components/data-table";
 import { Badge } from "@/components/ui/badge";
 import { ROLE_META, type Role } from "@/lib/fiber-app";
@@ -26,6 +27,14 @@ const columns: ColumnDef<Member>[] = [
   { label: "Last Sync", key: "lastSyncAt", type: "date", width: "130px" },
 ];
 
+const fields: FaField[] = [
+  { key: "name", label: "Name", required: true, half: true, placeholder: "Jesse Cardenas" },
+  { key: "role", label: "Role", type: "select", required: true, half: true, options: ["manager", "foreman", "crew"] },
+  { key: "email", label: "Email", type: "email", half: true, placeholder: "jcardenas@dono.com" },
+  { key: "phone", label: "Phone", type: "tel", half: true, placeholder: "(317) 555-0204" },
+  { key: "seatPrice", label: "Seat price ($/mo)", type: "number", half: true, placeholder: "49" },
+];
+
 export function CrewContent() {
   return (
     <FaListPage<Member>
@@ -33,6 +42,8 @@ export function CrewContent() {
       description="Seats, roles and what each person can do"
       apiUrl="/api/fiber-app/users"
       columns={columns}
+      fields={fields}
+      entityLabel="Crew member"
       searchPlaceholder="Search crew..."
       emptyIcon={<IconUsersGroup className="size-8 opacity-40" />}
       emptyMessage="No crew members yet"

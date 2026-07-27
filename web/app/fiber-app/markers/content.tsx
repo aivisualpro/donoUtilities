@@ -2,7 +2,9 @@
 
 import { IconMapPin } from "@tabler/icons-react";
 import { FaListPage } from "@/components/fiber-app/fa-list-page";
+import type { FaField } from "@/components/fiber-app/fa-record-dialog";
 import { StatusPill } from "@/components/fiber-app/fa-kit";
+import { MARKER_TYPES, WORK_STATUSES } from "@/lib/fiber-app";
 import type { ColumnDef } from "@/components/data-table";
 
 interface Marker {
@@ -27,6 +29,16 @@ const columns: ColumnDef<Marker>[] = [
   { label: "Reported", key: "reportedAt", type: "date", width: "130px" },
 ];
 
+const fields: FaField[] = [
+  { key: "markerNumber", label: "Marker", required: true, half: true, placeholder: "HA-001" },
+  { key: "type", label: "Type", type: "select", half: true, options: MARKER_TYPES },
+  { key: "status", label: "Status", type: "select", half: true, options: WORK_STATUSES },
+  { key: "reportedBy", label: "Reported by", half: true },
+  { key: "address", label: "Address", placeholder: "1420 Oak Ridge Dr" },
+  { key: "street", label: "Street", half: true },
+  { key: "notes", label: "Notes", type: "textarea" },
+];
+
 export function MarkersContent() {
   return (
     <FaListPage<Marker>
@@ -34,6 +46,9 @@ export function MarkersContent() {
       description="Every point of work reported from the field"
       apiUrl="/api/fiber-app/markers"
       columns={columns}
+      fields={fields}
+      entityLabel="Marker"
+      allowCreate={false}
       searchPlaceholder="Search markers, addresses, crew..."
       emptyIcon={<IconMapPin className="size-8 opacity-40" />}
       emptyMessage="No markers reported yet"

@@ -24,7 +24,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import type { ColumnDef } from "@/components/data-table";
-import { money } from "@/lib/fiber-app";
+import type { FaField } from "@/components/fiber-app/fa-record-dialog";
+import { money, UNITS } from "@/lib/fiber-app";
 
 interface Code {
   _id: string;
@@ -58,6 +59,15 @@ const columns: ColumnDef<Code>[] = [
 const SAMPLE = `UG-100\tUnderground Conduit 1.25in\tft\t4.15\t6.75\tUnderground
 AE-100\tAerial Strand Placement\tft\t1.85\t3.10\tAerial
 DR-100\tResidential Drop\tea\t175\t285\tDrops`;
+
+const fields: FaField[] = [
+  { key: "code", label: "Code", required: true, half: true, placeholder: "UG-100" },
+  { key: "unit", label: "Unit", type: "select", half: true, options: UNITS },
+  { key: "name", label: "Description", required: true, placeholder: "Underground Conduit 1.25in" },
+  { key: "teamPrice", label: "Crew rate ($)", type: "number", half: true, placeholder: "4.15" },
+  { key: "adminPrice", label: "Bill rate ($)", type: "number", half: true, placeholder: "6.75" },
+  { key: "category", label: "Category", half: true, placeholder: "Underground" },
+];
 
 export function BillingCodesContent() {
   const [open, setOpen] = React.useState(false);
@@ -129,6 +139,8 @@ export function BillingCodesContent() {
         apiUrl="/api/fiber-app/billing-codes"
         baseFilters={baseFilters}
         columns={columns}
+        fields={fields}
+        entityLabel="Billing code"
         searchPlaceholder="Search codes..."
         emptyIcon={<IconTags className="size-8 opacity-40" />}
         emptyMessage="No billing codes yet — import your price list to get started"

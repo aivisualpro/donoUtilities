@@ -1,19 +1,23 @@
 "use client";
 
 import * as React from "react";
-import { IconSearch, type Icon } from "@tabler/icons-react";
+import { IconPlus, IconSearch } from "@tabler/icons-react";
 
 import { PageHeader } from "@/components/page-header";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { FilterSelect } from "@/components/ui/filter-select";
 import { DataTable, type ColumnDef } from "@/components/data-table";
 import { useInfiniteData } from "@/hooks/use-infinite-data";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
+import {
+  FaRecordDialog,
+  type FaField,
+  type FaRecord,
+} from "@/components/fiber-app/fa-record-dialog";
 
 export interface FaFilterDef {
-  /** Query-param sent to the API. */
   param: string;
-  /** Key inside the API's filterOptions payload. */
   optionsKey: string;
   placeholder: string;
   allLabel: string;
@@ -32,12 +36,20 @@ export interface FaListPageProps<T extends { _id: string }> {
   actions?: React.ReactNode;
   onRowClick?: (row: T) => void;
   renderCell?: (row: T, col: ColumnDef<T>) => React.ReactNode | undefined;
-  /** Extra fixed query params (e.g. scoping to a project). */
   baseFilters?: Record<string, string>;
-  /** Rendered between the header and the table. */
   banner?: React.ReactNode;
-  /** Receives the loaded rows + raw response so callers can add summaries. */
-  onData?: (rows: T[]) => void;
+
+  /* ---- CRUD ---- */
+  /** Supplying fields turns on create / edit / delete for this collection. */
+  fields?: FaField[];
+  /** Singular label, e.g. "Customer". Defaults to the title minus a trailing "s". */
+  entityLabel?: string;
+  /** Extra values merged into every create payload. */
+  createExtra?: Record<string, unknown>;
+  allowCreate?: boolean;
+  allowDelete?: boolean;
+  /** Bump to force a refetch from outside. */
+  reloadToken?: number;
 }
 
 export function FaListPage<T extends { _id: string }>({
@@ -54,17 +66,31 @@ export function FaListPage<T extends { _id: string }>({
   renderCell,
   baseFilters,
   banner,
-  onData,
+  fields,
+  entityLabel,
+  createExtra,
+  allowCreate = true,
+  allowDelete = true,
+  reloadToken = 0,
 }: FaListPageProps<T>) {
   const [search, setSearch] = React.useState("");
   const debounced = useDebouncedValue(search, 300);
   const [selected, setSelected] = React.useState<Record<string, string>>({});
+  const [localToken, setLocalToken] = React.useState(0);
+
+  const [dialogOpen, setDialogOpen] = React.useState(false);
+  const [editing, setEditing] = React.useState<FaRecord | null>(null);
+
+  const crudEnabled = !!fields?.length;
+  const label = entityLabel || title.replace(/s$/, "");
 
   const serverFilters = React.useMemo(() => {
     const f: Record<string, string> = { ...(baseFilters || {}), ...selected };
     if (debounced) f.q = debounced;
+    // `_r` is ignored server-side; it just busts the memo so we refetch.
+    f._r = String(localToken + reloadToken);
     return f;
-  }, [baseFilters, selected, debounced]);
+  }, [baseFilters, selected, debounced, localToken, reloadToken]);
 
   const {
     records,
@@ -76,9 +102,17 @@ export function FaListPage<T extends { _id: string }>({
     filterOptions,
   } = useInfiniteData<T>({ apiUrl, filters: serverFilters });
 
-  React.useEffect(() => {
-    onData?.(records);
-  }, [records, onData]);
+  function openCreate() {
+    setEditing(null);
+    setDialogOpen(true);
+  }
+
+  function handleRowClick(row: T) {
+    if (onRowClick) { onRowClick(row); return; }
+    if (!crudEnabled) return;
+    setEditing(row as unknown as FaRecord);
+    setDialogOpen(true);
+  }
 
   return (
     <>
@@ -103,9 +137,7 @@ export function FaListPage<T extends { _id: string }>({
                 <FilterSelect
                   key={f.param}
                   value={selected[f.param] || "all"}
-                  onValueChange={(v) =>
-                    setSelected((prev) => ({ ...prev, [f.param]: v }))
-                  }
+                  onValueChange={(v) => setSelected((prev) => ({ ...prev, [f.param]: v }))}
                   placeholder={f.placeholder}
                   allLabel={f.allLabel}
                   options={filterOptions[f.optionsKey] || []}
@@ -115,7 +147,17 @@ export function FaListPage<T extends { _id: string }>({
             </>
           ) : undefined
         }
-        actions={actions}
+        actions={
+          <>
+            {actions}
+            {crudEnabled && allowCreate && (
+              <Button size="sm" className="h-8 text-xs" onClick={openCreate}>
+                <IconPlus className="mr-1 size-3.5" />
+                New {label.toLowerCase()}
+              </Button>
+            )}
+          </>
+        }
       />
 
       {banner}
@@ -130,14 +172,24 @@ export function FaListPage<T extends { _id: string }>({
         onLoadMore={loadMore}
         emptyIcon={emptyIcon}
         emptyMessage={emptyMessage}
-        onRowClick={onRowClick}
+        onRowClick={onRowClick || crudEnabled ? handleRowClick : undefined}
         renderCell={renderCell}
       />
+
+      {crudEnabled && (
+        <FaRecordDialog
+          open={dialogOpen}
+          onOpenChange={setDialogOpen}
+          entityLabel={label}
+          fields={fields!}
+          apiUrl={apiUrl}
+          record={editing}
+          extra={createExtra}
+          filterOptions={filterOptions}
+          allowDelete={allowDelete}
+          onSaved={() => setLocalToken((t) => t + 1)}
+        />
+      )}
     </>
   );
-}
-
-/** Small helper so simple pages can pass a Tabler icon straight through. */
-export function emptyIconOf(I: Icon) {
-  return <I className="size-8 opacity-40" />;
 }

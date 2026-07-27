@@ -4,7 +4,6 @@ import * as React from "react";
 import { toast } from "sonner";
 import {
   IconArrowLeft,
-  IconCamera,
   IconCheck,
   IconChevronRight,
   IconCircleCheck,
@@ -31,6 +30,7 @@ import {
 } from "@/components/ui/select";
 import { FiberLoadingAnimation } from "@/components/fiber-loading";
 import { EmptyState, ProgressBar, StatusPill } from "@/components/fiber-app/fa-kit";
+import { PhotoUploader } from "@/components/fiber-app/photo-uploader";
 import { humanizeStatus, money } from "@/lib/fiber-app";
 
 interface Project {
@@ -341,18 +341,15 @@ export function FieldContent() {
                               <IconPlus className="mr-1 size-3.5" />
                               Add billing
                             </Button>
-                            <Button
-                              variant="secondary"
-                              size="sm"
-                              className="h-9 text-[11px]"
-                              onClick={() => {
-                                enqueue(m.markerNumber + " · photo attached");
-                                toast.success("Photo queued with GPS tag");
-                              }}
-                            >
-                              <IconCamera className="mr-1 size-3.5" />
-                              Add photo
-                            </Button>
+                            <PhotoUploader
+                              projectId={active._id}
+                              markerId={m._id}
+                              caption={m.markerNumber + " " + m.type}
+                              compact
+                              label="Add photo"
+                              className="w-full"
+                              onUploaded={() => enqueue(m.markerNumber + " · photo uploaded")}
+                            />
                           </div>
                         </CardContent>
                       </Card>

@@ -17,6 +17,7 @@ import {
   IconMapPin,
   IconPhoto,
   IconReceipt2,
+  IconPencil,
   IconShieldLock,
   IconUpload,
   IconX,
@@ -66,9 +67,14 @@ import {
   PlanViewer,
   type PlanTool,
 } from "@/components/fiber-app/plan-viewer";
+import { PhotoUploader } from "@/components/fiber-app/photo-uploader";
+import { PhotoGrid } from "@/components/fiber-app/photo-grid";
+import { FaRecordDialog, type FaField } from "@/components/fiber-app/fa-record-dialog";
 import {
+  BUILD_TYPES,
   LINE_TYPES,
   MARKER_TYPES,
+  PROJECT_STATUSES,
   ROLES,
   ROLE_META,
   capabilitiesFor,
@@ -182,6 +188,21 @@ const NAV: { key: View; label: string; icon: typeof IconMap }[] = [
   { key: "permissions", label: "Permissions", icon: IconShieldLock },
 ];
 
+const PROJECT_FIELDS: FaField[] = [
+  { key: "name", label: "Project name", required: true },
+  { key: "customerName", label: "Customer", half: true },
+  { key: "foreman", label: "Foreman", half: true },
+  { key: "city", label: "City", half: true },
+  { key: "state", label: "State", half: true },
+  { key: "buildType", label: "Build type", type: "select", half: true, options: BUILD_TYPES },
+  { key: "status", label: "Status", type: "select", half: true, options: PROJECT_STATUSES },
+  { key: "budget", label: "Budget ($)", type: "number", half: true },
+  { key: "crewSize", label: "Crew size", type: "number", half: true },
+  { key: "startDate", label: "Start date", type: "date", half: true },
+  { key: "dueDate", label: "Due date", type: "date", half: true },
+  { key: "notes", label: "Notes", type: "textarea" },
+];
+
 function fmtDate(s: string) {
   if (!s) return "—";
   return new Date(s).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
@@ -217,6 +238,9 @@ export function ProjectDetailContent({ projectId }: { projectId: string }) {
   const [lFootage, setLFootage] = React.useState("");
   const [lCode, setLCode] = React.useState("");
   const [lStreet, setLStreet] = React.useState("");
+
+  // project edit dialog
+  const [editOpen, setEditOpen] = React.useState(false);
 
   // plan upload state
   const [uploading, setUploading] = React.useState(false);
@@ -587,6 +611,9 @@ export function ProjectDetailContent({ projectId }: { projectId: string }) {
                 <IconCircleCheck className="mr-1 size-3.5" />Complete Project
               </Button>
             )}
+            <Button variant="outline" size="sm" className="h-8 w-full text-[11px]" onClick={() => setEditOpen(true)}>
+              <IconPencil className="mr-1 size-3.5" />Edit Project
+            </Button>
           </div>
         </aside>
 
@@ -773,26 +800,23 @@ export function ProjectDetailContent({ projectId }: { projectId: string }) {
 
             {/* ---- PHOTOS ---- */}
             {view === "photos" && (
-              data.photos.length === 0 ? (
-                <EmptyState icon={IconCamera} title="No photos yet" message="Crews attach GPS-tagged photos as proof of every completed task." />
-              ) : (
-                <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-5">
-                  {data.photos.map((ph) => (
-                    <Card key={ph._id} className="overflow-hidden pt-0">
-                      <div className="flex aspect-[4/3] items-center justify-center bg-muted/50">
-                        <IconCamera className="size-7 text-muted-foreground/50" />
-                      </div>
-                      <CardContent className="space-y-0.5 px-3 pb-3">
-                        <p className="truncate text-xs font-medium" title={ph.caption}>{ph.caption}</p>
-                        <p className="text-[11px] text-muted-foreground">{ph.takenBy}</p>
-                        <p className="font-mono text-[10px] text-muted-foreground">
-                          {ph.lat ? ph.lat.toFixed(4) + ", " + ph.lng.toFixed(4) : "no GPS"}
-                        </p>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              )
+              <>
+                <PhotoUploader projectId={projectId} onUploaded={load} />
+                {data.photos.length === 0 ? (
+                  <EmptyState
+                    icon={IconCamera}
+                    title="No photos yet"
+                    message="Drag images onto the area above, or have crews upload them from Field Mode."
+                  />
+                ) : (
+                  <>
+                    <p className="text-xs text-muted-foreground">
+                      {data.photos.length.toLocaleString()} photo{data.photos.length === 1 ? "" : "s"}
+                    </p>
+                    <PhotoGrid photos={data.photos} onChanged={load} />
+                  </>
+                )}
+              </>
             )}
 
             {/* ---- FORMS ---- */}
@@ -1064,6 +1088,22 @@ export function ProjectDetailContent({ projectId }: { projectId: string }) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* ================= EDIT PROJECT ================= */}
+      <FaRecordDialog
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        entityLabel="Project"
+        fields={PROJECT_FIELDS}
+        apiUrl="/api/fiber-app/projects"
+        record={p}
+        onSaved={() => {
+          // a delete removes the project entirely — bounce back to the list
+          fetch("/api/fiber-app/projects/" + projectId)
+            .then((r) => (r.ok ? load() : router.push("/fiber-app/projects")))
+            .catch(() => router.push("/fiber-app/projects"));
+        }}
+      />
 
       {/* ================= LINE DIALOG ================= */}
       <Dialog open={!!linePts} onOpenChange={(o) => { if (!o) { setLinePts(null); setTool("pan"); } }}>

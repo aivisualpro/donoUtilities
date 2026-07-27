@@ -2,6 +2,7 @@
 
 import { IconFolder } from "@tabler/icons-react";
 import { FaListPage } from "@/components/fiber-app/fa-list-page";
+import type { FaField } from "@/components/fiber-app/fa-record-dialog";
 import type { ColumnDef } from "@/components/data-table";
 
 interface Doc {
@@ -23,6 +24,12 @@ const columns: ColumnDef<Doc>[] = [
   { label: "Uploaded", key: "uploadedAt", type: "date", width: "130px" },
 ];
 
+const fields: FaField[] = [
+  { key: "name", label: "Document", required: true, placeholder: "Permit Package.pdf" },
+  { key: "folder", label: "Folder", type: "select", half: true, optionsKey: "folders" },
+  { key: "uploadedBy", label: "Uploaded by", half: true },
+];
+
 export function DocumentsContent() {
   return (
     <FaListPage<Doc>
@@ -30,6 +37,9 @@ export function DocumentsContent() {
       description="Plans, permits, locate tickets and closeout packages"
       apiUrl="/api/fiber-app/documents"
       columns={columns}
+      fields={fields}
+      entityLabel="Document"
+      allowCreate={false}
       searchPlaceholder="Search documents..."
       emptyIcon={<IconFolder className="size-8 opacity-40" />}
       emptyMessage="No documents uploaded yet"
