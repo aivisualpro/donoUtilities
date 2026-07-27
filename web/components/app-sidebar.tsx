@@ -3,17 +3,28 @@
 import * as React from "react";
 import Link from "next/link";
 import {
+  IconAddressBook,
   IconBolt,
   IconCurrencyDollar,
   IconDatabase,
+  IconDeviceMobile,
   IconFileSpreadsheet,
+  IconFolder,
+  IconFolders,
+  IconForms,
+  IconLayoutDashboard,
   IconLogin,
   IconLogout,
+  IconMap2,
   IconMoon,
+  IconPhoto,
   IconReceipt,
+  IconRefresh,
   IconSettings,
   IconMapPin,
   IconSun,
+  IconTags,
+  IconTopologyStar3,
   IconUser,
   IconUsers,
   IconUsersGroup,
@@ -59,6 +70,26 @@ const data = {
     },
   ],
   groups: [
+    {
+      title: "FiberApp",
+      icon: IconTopologyStar3,
+      items: [
+        { title: "Dashboard", url: "/fiber-app/dashboard", icon: IconLayoutDashboard },
+        { title: "Projects", url: "/fiber-app/projects", icon: IconFolders },
+        { title: "Map View", url: "/fiber-app/map", icon: IconMap2 },
+        { title: "Markers & Lines", url: "/fiber-app/markers", icon: IconMapPin },
+        { title: "Photos", url: "/fiber-app/photos", icon: IconPhoto },
+        { title: "Forms", url: "/fiber-app/forms", icon: IconForms },
+        { title: "Documents", url: "/fiber-app/documents", icon: IconFolder },
+        { title: "Billing", url: "/fiber-app/billing", icon: IconReceipt },
+        { title: "Billing Codes", url: "/fiber-app/billing-codes", icon: IconTags },
+        { title: "Customers", url: "/fiber-app/customers", icon: IconAddressBook },
+        { title: "Crew", url: "/fiber-app/users", icon: IconUsersGroup },
+        { title: "Field Mode", url: "/fiber-app/field", icon: IconDeviceMobile },
+        { title: "Sync Status", url: "/fiber-app/sync-status", icon: IconRefresh },
+        { title: "Settings", url: "/fiber-app/settings", icon: IconSettings },
+      ],
+    },
     {
       title: "DTAP",
       icon: IconFileSpreadsheet,
@@ -222,4 +253,3 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     </Sidebar>
   );
 }
-
